@@ -1,0 +1,43 @@
+To run this Flask application in Termux on an Android device, you need to follow these steps:
+
+1. Install Termux from the Google Play Store or F-Droid.
+
+2. Open Termux and update the package repository to ensure you have the latest versions of the packages:
+
+```sh
+pkg update && pkg upgrade
+```
+
+3. Install Python and the necessary dependencies:
+
+```sh
+pkg install python python-dev clang libcrypt libjpeg-turbo ndk-sysroot cmake
+```
+
+4. Install pip (Python package installer) if it's not already installed:
+
+```sh
+pkg install python-pip
+```
+
+5. Install Flask and other required Python packages using pip:
+
+```sh
+pip install Flask Flask-Login Flask-SQLAlchemy Werkzeug opencv-python-headless numpy mtcnn
+```
+
+Note: Since Termux doesn't support video capture through `cv2.VideoCapture(0)`, you will need to modify the code to remove or adapt the parts that require camera access, or you can use static images for processing.
+
+6. If you want to use the camera, you might need to give Termux access to your device's camera. You can do this by going to your device's settings, finding Termux in the list of apps, and enabling camera permissions.
+
+7. Save your Flask application code in a file, for example, `app.py`.
+
+8. Run the Flask application:
+
+```sh
+FLASK_APP=app.py flask run --host=0.0.0.0
+```
+
+The application should now be running, and you can access it by opening a web browser and navigating to `http://localhost:5000` or `http://<your-device-ip>:5000` if you want to access it from another device on the same network.
+
+Remember that the code you provided requires a camera, and running it on Termux without modification will likely result in errors due to the lack of camera support. You will need to adapt the code to work without a camera or find a way to capture images in Termux that can be processed by your application.
