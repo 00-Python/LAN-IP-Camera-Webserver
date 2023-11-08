@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <title>IP Camera Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <h1 class="title">Welcome to the IP Camera Viewer</h1>
+    <div class="video-container">
+      <img src="{{ url_for('video') }}" alt="Video Feed" class="video-frame">
+    </div>
+
+    <a href="{{ url_for('register') }}" class="create-account-button">Create User</a>
+    <a href="{{ url_for('logout') }}" class="logout-button btn">Logout</a>
+  </body>
+</html>
