@@ -5,6 +5,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import cv2
 import numpy as np
+from mtcnn import MTCNN
+import uuid
+from datetime import datetime
+import base64
+
+
+# Load the Haar cascade xml file for face detection
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 
 app = Flask(__name__)
@@ -18,8 +26,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 camera = cv2.VideoCapture(0)  # use 0 for web camera
-# Load pre-trained model for person detection
-net = cv2.dnn.readNetFromCaffe('MobileNetSSD_deploy.prototxt.txt', 'MobileNetSSD_deploy.caffemodel')
+# Initialize the MTCNN model
+detector = MTCNN()
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -32,6 +40,25 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
+class FaceRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    face_image = db.Column(db.LargeBinary)
+    left_eye_image = db.Column(db.LargeBinary)
+    right_eye_image = db.Column(db.LargeBinary)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    unique_id = db.Column(db.String(36), default=lambda: str(uuid.uuid4()))
+
+
+facial_recognition_enabled = False
+
+@app.route('/toggle_facial_recognition', methods=['POST'])
+@login_required
+def toggle_facial_recognition():
+    global facial_recognition_enabled
+    facial_recognition_enabled = not facial_recognition_enabled
+    return redirect(url_for('index'))
+
 # The User loading function required by Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
@@ -41,45 +68,67 @@ def load_user(user_id):
 def unauthorized_callback():
     return redirect(url_for('login'))
 
+def save_face_record(frame, bounding_box, keypoints):
+    # Extract face and eye images from the frame using the bounding box and keypoints
+    face_image = frame[bounding_box[1]:bounding_box[1] + bounding_box[3], bounding_box[0]:bounding_box[0] + bounding_box[2]]
+    left_eye_image = frame[keypoints['left_eye'][1]-10:keypoints['left_eye'][1]+10, keypoints['left_eye'][0]-10:keypoints['left_eye'][0]+10]
+    right_eye_image = frame[keypoints['right_eye'][1]-10:keypoints['right_eye'][1]+10, keypoints['right_eye'][0]-10:keypoints['right_eye'][0]+10]
+
+    # Convert images to binary data
+    _, face_image_encoded = cv2.imencode('.png', face_image)
+    _, left_eye_image_encoded = cv2.imencode('.png', left_eye_image)
+    _, right_eye_image_encoded = cv2.imencode('.png', right_eye_image)
+
+    # Create a new FaceRecord object
+    face_record = FaceRecord(
+        face_image=face_image_encoded.tobytes(),
+        left_eye_image=left_eye_image_encoded.tobytes(),
+        right_eye_image=right_eye_image_encoded.tobytes()
+    )
+
+    # Add the new face record to the database
+    db.session.add(face_record)
+    db.session.commit()
+
+
 def generate_frames():
     while True:
         success, frame = camera.read()
         if not success:
             break
         else:
-            # Resize the frame to 300x300 for SSD
-            frame_resized = cv2.resize(frame, (300, 300))
+            if facial_recognition_enabled:
+                # Detect faces in the frame
+                result = detector.detect_faces(frame)
 
-            # Prepare the frame for the SSD model
-            blob = cv2.dnn.blobFromImage(frame_resized, 0.007843, (300, 300), 127.5)
+                # Iterate over the face detections
+                for person in result:
+                    bounding_box = person['box']
+                    keypoints = person['keypoints']
 
-            # Pass the blob through the network
-            net.setInput(blob)
-            detections = net.forward()
+                    # Save the face record to the database without the landmarks
+                    with app.app_context():
+                        save_face_record(frame, bounding_box, keypoints)
 
-            # Iterate over the detections
-            for i in np.arange(0, detections.shape[2]):
-                # Extract the confidence (i.e., probability) associated with the prediction
-                confidence = detections[0, 0, i, 2]
+                    # Draw a rectangle around the face
+                    cv2.rectangle(frame,
+                                (bounding_box[0], bounding_box[1]),
+                                (bounding_box[0]+bounding_box[2], bounding_box[1] + bounding_box[3]),
+                                (0,155,255),
+                                2)
 
-                # Filter out weak detections by ensuring the `confidence` is greater than the minimum confidence
-                if confidence > 0.2:
-                    # Extract the index of the class label from the `detections`
-                    idx = int(detections[0, 0, i, 1])
-
-                    # If the class label is a person, we will draw a bounding box around it
-                    if idx == 15:
-                        # Compute the (x, y)-coordinates of the bounding box for the object
-                        box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
-                        (startX, startY, endX, endY) = box.astype("int")
-
-                        # Draw the bounding box around the detected object on the frame
-                        cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
+                    # Draw the facial landmarks
+                    cv2.circle(frame,(keypoints['left_eye']), 2, (0,155,255), 2)
+                    cv2.circle(frame,(keypoints['right_eye']), 2, (0,155,255), 2)
+                    cv2.circle(frame,(keypoints['nose']), 2, (0,155,255), 2)
+                    cv2.circle(frame,(keypoints['mouth_left']), 2, (0,155,255), 2)
+                    cv2.circle(frame,(keypoints['mouth_right']), 2, (0,155,255), 2)
 
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
 
 @app.route('/')
 @login_required
@@ -131,6 +180,20 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
+@app.route('/image_database')
+@login_required
+def image_database():
+    # Query all FaceRecord entries from the database
+    face_records = FaceRecord.query.all()
+    # Convert binary image data to base64 for HTML display
+    for record in face_records:
+        record.face_image_base64 = base64.b64encode(record.face_image).decode('ascii')
+        record.left_eye_image_base64 = base64.b64encode(record.left_eye_image).decode('ascii')
+        record.right_eye_image_base64 = base64.b64encode(record.right_eye_image).decode('ascii')
+    # Render the template with the face records
+    return render_template('image_database.html', face_records=face_records)
+
 
 
 @app.route('/logout')

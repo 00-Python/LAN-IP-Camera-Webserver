@@ -11,8 +11,12 @@
       <img src="{{ url_for('video') }}" alt="Video Feed" class="video-frame">
       <div class="toolbar" id="toolbar">
         <button id="fullscreenBtn" class="create-account-button">Fullscreen</button>
+        <form action="{{ url_for('toggle_facial_recognition') }}" method="POST">
+          <input type="submit" value="Toggle Facial Recognition">
+        </form>
       </div>
     </div>
+
 
 
     <a href="{{ url_for('register') }}" class="create-account-button">Create User</a>

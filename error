@@ -1,0 +1,19 @@
+[2023-11-08 05:21:58,678] ERROR in app: Exception on /image_database [GET]
+Traceback (most recent call last):
+  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask/app.py", line 1455, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask/app.py", line 869, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask/app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask/app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zero/Desktop/Python Projects/LAN-IP-Camera-Webserver/app.py", line 190, in image_database
+    record.face_image_base64 = base64.b64encode(record.face_image).decode('ascii')
