@@ -9,9 +9,28 @@
     <h1 class="title">Welcome to the IP Camera Viewer</h1>
     <div class="video-container">
       <img src="{{ url_for('video') }}" alt="Video Feed" class="video-frame">
+      <div class="toolbar" id="toolbar">
+        <button id="fullscreenBtn" class="create-account-button">Fullscreen</button>
+      </div>
     </div>
+
 
     <a href="{{ url_for('register') }}" class="create-account-button">Create User</a>
     <a href="{{ url_for('logout') }}" class="logout-button btn">Logout</a>
+
+    <script>
+      document.getElementById('fullscreenBtn').addEventListener('click', function() {
+        const videoFrame = document.querySelector('.video-frame');
+        if (videoFrame.requestFullscreen) {
+          videoFrame.requestFullscreen();
+        } else if (videoFrame.mozRequestFullScreen) { /* Firefox */
+          videoFrame.mozRequestFullScreen();
+        } else if (videoFrame.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+          videoFrame.webkitRequestFullscreen();
+        } else if (videoFrame.msRequestFullscreen) { /* IE/Edge */
+          videoFrame.msRequestFullscreen();
+        }
+      });
+    </script>
   </body>
 </html>

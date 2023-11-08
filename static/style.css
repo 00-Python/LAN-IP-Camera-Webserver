@@ -99,6 +99,20 @@ p {
     background-color: #45a049;
 }
 
+.toolbar {
+  display: none;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.15);
+  width: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  color: white;
+}
+
+.video-container:hover .toolbar {
+  display: block;
+}
+
 
 @media only screen and (max-width: 480px) {
   .title {

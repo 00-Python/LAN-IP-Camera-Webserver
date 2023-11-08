@@ -4,6 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import cv2
+import numpy as np
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
@@ -16,6 +18,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 camera = cv2.VideoCapture(0)  # use 0 for web camera
+# Load pre-trained model for person detection
+net = cv2.dnn.readNetFromCaffe('MobileNetSSD_deploy.prototxt.txt', 'MobileNetSSD_deploy.caffemodel')
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -43,6 +47,35 @@ def generate_frames():
         if not success:
             break
         else:
+            # Resize the frame to 300x300 for SSD
+            frame_resized = cv2.resize(frame, (300, 300))
+
+            # Prepare the frame for the SSD model
+            blob = cv2.dnn.blobFromImage(frame_resized, 0.007843, (300, 300), 127.5)
+
+            # Pass the blob through the network
+            net.setInput(blob)
+            detections = net.forward()
+
+            # Iterate over the detections
+            for i in np.arange(0, detections.shape[2]):
+                # Extract the confidence (i.e., probability) associated with the prediction
+                confidence = detections[0, 0, i, 2]
+
+                # Filter out weak detections by ensuring the `confidence` is greater than the minimum confidence
+                if confidence > 0.2:
+                    # Extract the index of the class label from the `detections`
+                    idx = int(detections[0, 0, i, 1])
+
+                    # If the class label is a person, we will draw a bounding box around it
+                    if idx == 15:
+                        # Compute the (x, y)-coordinates of the bounding box for the object
+                        box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
+                        (startX, startY, endX, endY) = box.astype("int")
+
+                        # Draw the bounding box around the detected object on the frame
+                        cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
@@ -75,7 +108,7 @@ def login():
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
