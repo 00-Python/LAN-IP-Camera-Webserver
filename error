@@ -1,19 +1,37 @@
-[2023-11-08 05:21:58,678] ERROR in app: Exception on /image_database [GET]
-Traceback (most recent call last):
-  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask/app.py", line 1455, in wsgi_app
-    response = self.full_dispatch_request()
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask/app.py", line 869, in full_dispatch_request
-    rv = self.handle_user_exception(e)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask/app.py", line 867, in full_dispatch_request
-    rv = self.dispatch_request()
-         ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask/app.py", line 852, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/zero/Desktop/Python Projects/IP camera/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
-    return current_app.ensure_sync(func)(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/zero/Desktop/Python Projects/LAN-IP-Camera-Webserver/app.py", line 190, in image_database
-    record.face_image_base64 = base64.b64encode(record.face_image).decode('ascii')
+[2023Traceback (most recent call last):
+  File "/data/user/0/ru.iiec.pydroid3/files/accomp_files/iiec_run/iiec_run.py", line 31, in <module>
+    start(fakepyfile,mainpyfile)
+  File "/data/user/0/ru.iiec.pydroid3/files/accomp_files/iiec_run/iiec_run.py", line 30, in start
+    exec(open(mainpyfile).read(),  __main__.__dict__)
+  File "<string>", line 8, in <module>
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/mtcnn/__init__.py", line 26, in <module>
+    from mtcnn.mtcnn import MTCNN
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/mtcnn/mtcnn.py", line 37, in <module>
+    from mtcnn.network.factory import NetworkFactory
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/mtcnn/network/factory.py", line 26, in <module>
+    from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPooling2D, PReLU, Flatten, Softmax
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/api/_v2/keras/__init__.py", line 12, in <module>
+    from keras import __version__
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/__init__.py", line 21, in <module>
+    from keras import models
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/models/__init__.py", line 18, in <module>
+    from keras.engine.functional import Functional
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/engine/functional.py", line 26, in <module>
+    from keras import backend
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/backend.py", line 34, in <module>
+    from keras.engine import keras_tensor
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/engine/keras_tensor.py", line 19, in <module>
+    from keras.utils import object_identity
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/utils/__init__.py", line 48, in <module>
+    from keras.utils.layer_utils import get_source_inputs
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/utils/layer_utils.py", line 26, in <module>
+    from keras import initializers
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/initializers/__init__.py", line 22, in <module>
+    from keras.initializers import initializers_v2
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/initializers/initializers_v2.py", line 23, in <module>
+    from keras.dtensor import utils
+  File "/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/keras/dtensor/__init__.py", line 22, in <module>
+    from tensorflow.compat.v2.experimental import dtensor as dtensor_api
+ImportError: cannot import name 'dtensor' from 'tensorflow.compat.v2.experimental' (/data/user/0/ru.iiec.pydroid3/files/aarch64-linux-android/lib/python3.9/site-packages/tensorflow/_api/v2/compat/v2/experimental/__init__.py)
+
+[Program finished]
