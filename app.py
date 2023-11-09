@@ -73,16 +73,16 @@ def create_profiles(correlation_threshold):
             db.session.add(profile)
             record.profile = profile
             profiles.append(profile)
+            db.session.commit()  # Commit after adding each profile
 
-        for other_record in all_face_records:
-            if record.id != other_record.id and not other_record.profile_id:
-                image1 = cv2.imdecode(np.frombuffer(record.face_image, np.uint8), cv2.IMREAD_COLOR)
-                image2 = cv2.imdecode(np.frombuffer(other_record.face_image, np.uint8), cv2.IMREAD_COLOR)
-                classification = classify_by_pearson(image1, image2, correlation_threshold)
-                if classification == 'Similar':
-                    other_record.profile = record.profile
-
-    db.session.commit()
+            for other_record in all_face_records:
+                if record.id != other_record.id and not other_record.profile_id:
+                    image1 = cv2.imdecode(np.frombuffer(record.face_image, np.uint8), cv2.IMREAD_COLOR)
+                    image2 = cv2.imdecode(np.frombuffer(other_record.face_image, np.uint8), cv2.IMREAD_COLOR)
+                    classification = classify_by_pearson(image1, image2, correlation_threshold)
+                    if classification == 'Similar':
+                        other_record.profile = record.profile
+                        db.session.commit()  # Commit after classifying each record
 
 
 def classify_by_pearson(image1, image2, correlation_threshold: int):
