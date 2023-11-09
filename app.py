@@ -62,7 +62,7 @@ class Profile(db.Model):
 
 facial_recognition_enabled = False
 
-def create_profiles(correlation_threshold):
+def create_profiles(correlation_threshold: float = 0.95):
     all_face_records = FaceRecord.query.all()
     profiles = []
 
