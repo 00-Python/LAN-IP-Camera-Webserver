@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Image Database</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
+{% extends 'base.html' %}
+{% block title %}Image Database{% endblock %}
+
+{% block head %}
+<style>
         .gallery {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -26,8 +24,9 @@
             color: #555;
         }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     <h1>Image Database</h1>
     <div class="gallery">
         {% for record in face_records %}
@@ -43,5 +42,4 @@
         {% endfor %}
     </div>
     <a href="{{ url_for('index') }}">Back to Home</a>
-</body>
-</html>
+{% endblock %}

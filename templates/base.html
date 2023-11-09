@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('image_database') }}">Image Database</a></li>
+
+            <li>
+                <form action="{{ url_for('clear_db') }}" method="post" style="display: inline;">
+                    <input id="clear-db" type="submit" value="Clear DB">
+                </form>
+            </li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            <!-- Add more navigation items here -->
+        </ul>
+    </nav>
+
+    {% endif %}
+    {% block content %}{% endblock %}
+</body>
+</html>
