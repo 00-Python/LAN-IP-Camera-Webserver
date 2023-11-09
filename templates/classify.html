@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Classify Images{% endblock %}
+
+{% block content %}
+<h1>Classify Images</h1>
+{% for profile in profiles %}
+    <h2>{{ profile.name }}</h2>
+    {% for record in profile.face_records %}
+        <img src="data:image/png;base64,{{ record.face_image_base64 }}" alt="Face Image">
+    {% endfor %}
+{% endfor %}
+{% endblock %}
