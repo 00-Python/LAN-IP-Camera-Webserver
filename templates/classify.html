@@ -4,10 +4,19 @@
 
 {% block content %}
 <h1>Classify Images</h1>
+<form action="{{ url_for('classify') }}" method="post">
+    <label for="correlation_threshold">Correlation Threshold:</label>
+    <input type="text" id="correlation_threshold" name="correlation_threshold" value="{{ correlation_threshold }}">
+    <input type="submit" value="Classify">
+</form>
+
 {% for profile in profiles %}
     <h2>{{ profile.name }}</h2>
     {% for record in profile.face_records %}
         <img src="data:image/png;base64,{{ record.face_image_base64 }}" alt="Face Image">
     {% endfor %}
 {% endfor %}
+<form action="{{ url_for('clear_profiles') }}" method="post">
+    <input type="submit" value="Clear Profiles">
+</form>
 {% endblock %}

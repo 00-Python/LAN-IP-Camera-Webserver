@@ -29,6 +29,9 @@
 {% block content %}
 <h1>Image Database</h1>
 <div class="gallery">
+    <form action="{{ url_for('clear_face_records') }}" method="post" style="display: inline;">
+        <input id="clear-db" type="submit" value="Clear Images">
+    </form>
     {% for record in face_records %}
     <div class="gallery-item">
         {% if record.face_image_base64 %}
@@ -54,4 +57,7 @@
     {% endfor %}
 </div>
 <a href="{{ url_for('index') }}">Back to Home</a>
+<form action="{{ url_for('clear_face_records') }}" method="post">
+    <input type="submit" value="Clear Face Records">
+</form>
 {% endblock %}

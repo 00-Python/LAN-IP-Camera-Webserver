@@ -62,7 +62,7 @@ class Profile(db.Model):
 
 facial_recognition_enabled = False
 
-def create_profiles():
+def create_profiles(correlation_threshold):
     all_face_records = FaceRecord.query.all()
     profiles = []
 
@@ -78,14 +78,14 @@ def create_profiles():
             if record.id != other_record.id and not other_record.profile_id:
                 image1 = cv2.imdecode(np.frombuffer(record.face_image, np.uint8), cv2.IMREAD_COLOR)
                 image2 = cv2.imdecode(np.frombuffer(other_record.face_image, np.uint8), cv2.IMREAD_COLOR)
-                classification = classify_by_pearson(image1, image2)
+                classification = classify_by_pearson(image1, image2, correlation_threshold)
                 if classification == 'Similar':
                     other_record.profile = record.profile
 
     db.session.commit()
 
 
-def classify_by_pearson(image1, image2):
+def classify_by_pearson(image1, image2, correlation_threshold: int):
     # Resize images to the same size if they are different
     if image1.shape != image2.shape:
         # Choose a common size, for example, the size of the first image
@@ -100,11 +100,10 @@ def classify_by_pearson(image1, image2):
     correlation, _ = pearsonr(image1_flattened, image2_flattened)
 
     # Classify based on the correlation
-    if correlation > 0.85:  # This threshold can be adjusted
+    if correlation > correlation_threshold:  # This threshold can be adjusted
         return 'Similar'
     else:
         return 'Different'
-
 
 def save_face_record(frame, bounding_box, gps_location):
     face_image = frame[bounding_box[1]:bounding_box[1] + bounding_box[3], bounding_box[0]:bounding_box[0] + bounding_box[2]]
@@ -265,17 +264,30 @@ def image_database():
         record.mouth_image_base64 = base64.b64encode(record.mouth_image).decode('ascii') if record.mouth_image else None
     return render_template('image_database.html', face_records=face_records)
 
-@app.route('/clear_db', methods=['POST'])
+@app.route('/clear_face_records', methods=['POST'])
 @login_required
-def clear_db():
+def clear_face_records():
     try:
         num_face_records_deleted = db.session.query(FaceRecord).delete()
         db.session.commit()
         message = f"Deleted {num_face_records_deleted} face records from the database."
     except Exception as e:
         db.session.rollback()
-        message = f"Error clearing image database: {e}"
-    return redirect(url_for('index', message=message))
+        message = f"Error clearing face records database: {e}"
+    return redirect(url_for('image_database', message=message))
+
+@app.route('/clear_profiles', methods=['POST'])
+@login_required
+def clear_profiles():
+    try:
+        num_profiles_deleted = db.session.query(Profile).delete()
+        db.session.commit()
+        message = f"Deleted {num_profiles_deleted} profiles from the database."
+    except Exception as e:
+        db.session.rollback()
+        message = f"Error clearing profiles database: {e}"
+    return redirect(url_for('classify', message=message))
+
 
 @app.route('/compare_faces', methods=['POST'])
 @login_required
@@ -299,16 +311,19 @@ def compare_faces():
     except Exception as e:
         return str(e), 500
 
-@app.route('/classify')
+@app.route('/classify', methods=['GET', 'POST'])
 @login_required
 def classify():
-    create_profiles()  # This will group all ungrouped face records into profiles
+    if request.method == 'POST':
+        correlation_threshold = float(request.form.get('correlation_threshold', 0.85))
+        create_profiles(correlation_threshold)  # Pass the threshold to the function
+    else:
+        correlation_threshold = 0.85  # Default value
     all_profiles = Profile.query.all()
     for profile in all_profiles:
         for record in profile.face_records:
             record.face_image_base64 = base64.b64encode(record.face_image).decode('ascii') if record.face_image else None
-
-    return render_template('classify.html', profiles=all_profiles)
+    return render_template('classify.html', profiles=all_profiles, correlation_threshold=correlation_threshold)
 
 
 @app.route('/logout')
