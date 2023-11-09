@@ -13,7 +13,9 @@
 <div class="profile-grid">
     {% for profile in profiles %}
         <div class="profile-box" onclick="openModal('{{ profile.id }}')">
-            <img src="data:image/png;base64,{{ profile.face_records[0]['face_image_base64'] }}" alt="Profile Image" class="profile-image">
+        {% if profile.face_records %}
+            <img src="data:image/png;base64,{{ profile.face_records[0].face_image_base64 }}" alt="Profile Image" class="profile-image">
+        {% endif %}
             <div class="profile-name">{{ profile.name }}</div>
         </div>
 
