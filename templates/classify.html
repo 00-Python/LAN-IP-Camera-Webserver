@@ -10,13 +10,50 @@
     <input type="submit" value="Classify">
 </form>
 
-{% for profile in profiles %}
-    <h2>{{ profile.name }}</h2>
-    {% for record in profile.face_records %}
-        <img src="data:image/png;base64,{{ record.face_image_base64 }}" alt="Face Image">
+<div class="profile-grid">
+    {% for profile in profiles %}
+        <div class="profile-box" onclick="openModal('{{ profile.id }}')">
+            <img src="data:image/png;base64,{{ profile.face_records[0]['face_image_base64'] }}" alt="Profile Image" class="profile-image">
+            <div class="profile-name">{{ profile.name }}</div>
+        </div>
+
+        <!-- Modal Structure -->
+        <div id="modal-{{ profile.id }}" class="modal">
+            <div class="modal-content">
+                <h4>{{ profile.name }}</h4>
+                <!-- Add more profile details here -->
+                {% for record in profile.face_records %}
+                    <img src="data:image/png;base64,{{ record.face_image_base64 }}" alt="Face Image">
+                    <!-- Add other record details here -->
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('{{ profile.id }}')">Close</button>
+            </div>
+        </div>
     {% endfor %}
-{% endfor %}
+</div>
+
 <form action="{{ url_for('clear_profiles') }}" method="post">
     <input type="submit" value="Clear Profiles">
 </form>
+
+<script>
+function openModal(profileId) {
+    var modal = document.getElementById('modal-' + profileId);
+    modal.style.display = 'block';
+}
+
+function closeModal(profileId) {
+    var modal = document.getElementById('modal-' + profileId);
+    modal.style.display = 'none';
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+    if (event.target.className === 'modal') {
+        event.target.style.display = 'none';
+    }
+}
+</script>
 {% endblock %}

@@ -44,7 +44,8 @@ class User(UserMixin, db.Model):
 class FaceRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    profile_id = db.Column(db.Integer, db.ForeignKey('profile.id'))  # Add this line
+    profile_id = db.Column(db.Integer, db.ForeignKey('profile.id'))
+    body_image = db.Column(db.LargeBinary)
     face_image = db.Column(db.LargeBinary)
     left_eye_image = db.Column(db.LargeBinary)
     right_eye_image = db.Column(db.LargeBinary)
@@ -106,51 +107,63 @@ def classify_by_pearson(image1, image2, correlation_threshold: int):
         return 'Different'
 
 def save_face_record(frame, bounding_box, gps_location):
-    face_image = frame[bounding_box[1]:bounding_box[1] + bounding_box[3], bounding_box[0]:bounding_box[0] + bounding_box[2]]
+    # Save the whole or partial body image
+    body_image = frame[bounding_box[1]:bounding_box[1] + bounding_box[3], bounding_box[0]:bounding_box[0] + bounding_box[2]]
+    _, body_image_encoded = cv2.imencode('.png', body_image)
 
-    eyes_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
-    eyes = eyes_cascade.detectMultiScale(face_image)
+    # Detect the face within the body image
+    gray_body = cv2.cvtColor(body_image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray_body, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
 
-    left_eye_image = None
-    right_eye_image = None
-    mouth_image = None
-
-    eyes = sorted(eyes, key=lambda x: x[0])
-
-    if len(eyes) >= 2:
-        left_eye = eyes[0]
-        right_eye = eyes[1]
-
-        lex, ley, lew, leh = left_eye
-        left_eye_image = face_image[ley:ley+leh, lex:lex+lew]
-
-        rex, rey, rew, reh = right_eye
-        right_eye_image = face_image[rey:rey+reh, rex:rex+rew]
-
-    gray_face = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
-    mouth_rects = mouth_cascade.detectMultiScale(gray_face, scaleFactor=1.5, minNeighbors=20, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
-
-    if len(mouth_rects) > 0:
-        mx, my, mw, mh = mouth_rects[0]
-        mouth_image = face_image[my:my+mh, mx:mx+mw]
-
-    # Only proceed if all images are present
-    if left_eye_image is not None and right_eye_image is not None and mouth_image is not None:
+    if len(faces) > 0:
+        fx, fy, fw, fh = faces[0]
+        face_image = body_image[fy:fy+fh, fx:fx+fw]
         _, face_image_encoded = cv2.imencode('.png', face_image)
-        left_eye_image_encoded = cv2.imencode('.png', left_eye_image)[1]
-        right_eye_image_encoded = cv2.imencode('.png', right_eye_image)[1]
-        mouth_image_encoded = cv2.imencode('.png', mouth_image)[1]
 
-        face_record = FaceRecord(
-            face_image=face_image_encoded.tobytes(),
-            left_eye_image=left_eye_image_encoded.tobytes(),
-            right_eye_image=right_eye_image_encoded.tobytes(),
-            mouth_image=mouth_image_encoded.tobytes(),
-            gps_location=gps_location
-        )
+        # Detect eyes within the face image
+        eyes_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+        eyes = eyes_cascade.detectMultiScale(face_image)
 
-        db.session.add(face_record)
-        db.session.commit()
+        left_eye_image = None
+        right_eye_image = None
+        eyes = sorted(eyes, key=lambda x: x[0])
+
+        if len(eyes) >= 2:
+            left_eye = eyes[0]
+            right_eye = eyes[1]
+
+            lex, ley, lew, leh = left_eye
+            left_eye_image = face_image[ley:ley+leh, lex:lex+lew]
+            _, left_eye_image_encoded = cv2.imencode('.png', left_eye_image)
+
+            rex, rey, rew, reh = right_eye
+            right_eye_image = face_image[rey:rey+reh, rex:rex+rew]
+            _, right_eye_image_encoded = cv2.imencode('.png', right_eye_image)
+
+        # Detect mouth within the face image
+        mouth_image = None
+        mouth_rects = mouth_cascade.detectMultiScale(gray_body[fy:fy+fh, fx:fx+fw], scaleFactor=1.5, minNeighbors=20, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
+
+        if len(mouth_rects) > 0:
+            mx, my, mw, mh = mouth_rects[0]
+            mouth_image = face_image[my:my+mh, mx:mx+mw]
+            _, mouth_image_encoded = cv2.imencode('.png', mouth_image)
+
+        # Only proceed if all images are present
+        if face_image is not None and left_eye_image is not None and right_eye_image is not None and mouth_image is not None:
+            face_record = FaceRecord(
+                body_image=body_image_encoded.tobytes(),
+                face_image=face_image_encoded.tobytes(),
+                left_eye_image=left_eye_image_encoded.tobytes(),
+                right_eye_image=right_eye_image_encoded.tobytes(),
+                mouth_image=mouth_image_encoded.tobytes(),
+                gps_location=gps_location
+            )
+
+            db.session.add(face_record)
+            db.session.commit()
+
+
 def get_gps_location(api_key="6bc9fc19816243999549491eae7c3aef"):
     response = requests.get(f'https://api.ipgeolocation.io/ipgeo?apiKey={api_key}')
     if response.status_code == 200:
@@ -174,7 +187,8 @@ def generate_frames():
 
                     with app.app_context():
                         dummy_gps_location = "0.0,0.0"
-                        save_face_record(frame, bounding_box, dummy_gps_location)
+                        save_face_record(frame, bounding_box, dummy_gps_location)  # Save the whole or partial body image
+
 
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
